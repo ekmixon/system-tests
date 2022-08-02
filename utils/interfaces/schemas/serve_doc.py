@@ -28,7 +28,7 @@ def default():
 
     for id, schema in store.items():
         # skip some schemas
-        if not id.endswith("request.json") and not "title" in schema:
+        if not id.endswith("request.json") and "title" not in schema:
             continue
 
         doc_path = id.replace(".json", ".html")

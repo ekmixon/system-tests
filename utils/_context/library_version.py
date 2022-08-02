@@ -100,16 +100,16 @@ class LibraryVersion:
         assert v > "p@0.9"
         assert "p@0.9" < v
 
-        assert (v <= "u@1.0") is False
-        assert (v >= "u@1.0") is False
+        assert v > "u@1.0"
+        assert v < "u@1.0"
 
-        assert ("u@1.0" <= v) is False
-        assert ("u@1.0" >= v) is False
+        assert "u@1.0" > v
+        assert "u@1.0" < v
 
         v = LibraryVersion("p")
 
-        assert ("u@1.0" == v) is False
-        assert ("u@1.0" <= v) is False
+        assert v != "u@1.0"
+        assert "u@1.0" > v
 
         v = LibraryVersion("python", "0.53.0.dev70+g494e6dc0")
 

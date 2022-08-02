@@ -63,8 +63,7 @@ class _LogsInterfaceValidator(InterfaceValidator):
 
             parsed = {}
             for parser in self._parsers:
-                m = parser.match(log_line)
-                if m:
+                if m := parser.match(log_line):
                     parsed = m.groupdict()
                     if "level" in parsed:
                         parsed["level"] = self._get_standardized_level(parsed["level"])
@@ -112,8 +111,6 @@ class _LibraryStdout(_LogsInterfaceValidator):
     def __init__(self):
         super().__init__("Weblog stdout")
 
-        p = "(?P<{}>{})".format
-
         self._skipped_patterns += [
             re.compile(r"^Attaching to systemtests_weblog_1$"),
             re.compile(r"systemtests_weblog_1 exited with code \d+"),
@@ -125,6 +122,8 @@ class _LibraryStdout(_LogsInterfaceValidator):
                 re.compile(r"^ +:: Spring Boot :: +\(v\d+.\d+.\d+(-SNAPSHOT)?\)$"),
             ]
             self._new_log_line_pattern = re.compile(r"^(\[dd.trace )?\d{4}-\d\d-\d\d")
+
+            p = "(?P<{}>{})".format
 
             source = p("source", r"[a-z\.]+")
             timestamp = p("timestamp", r"\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d:\d\d\d [+\-]0000")

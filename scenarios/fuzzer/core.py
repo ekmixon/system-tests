@@ -45,7 +45,7 @@ class _RequestDumper:
         if not self.enabled:
             return
 
-        if self.logger == None:
+        if self.logger is None:
             self.logger = logging.Logger(__name__)
             self.logger.addHandler(RotatingFileHandler(self.filename))
 
@@ -121,14 +121,16 @@ class Fuzzer(object):
 
     def _add_status_metric(self, key, name):
         self.status_metrics[key] = AccumulatedMetricWithPercent(
-            name, self.count_metric, display_length=4, raw_name="R_" + key
+            name, self.count_metric, display_length=4, raw_name=f"R_{key}"
         )
 
     def _add_backend_request(self, key, name):
-        self.backend_requests[key] = ResetedAccumulatedMetric(name, raw_name="B_" + key)
+        self.backend_requests[key] = ResetedAccumulatedMetric(
+            name, raw_name=f"B_{key}"
+        )
 
     def _add_backend_signal(self, key, name):
-        self.backend_signals[key] = ResetedAccumulatedMetric(name, raw_name="S_" + key)
+        self.backend_signals[key] = ResetedAccumulatedMetric(name, raw_name=f"S_{key}")
 
     async def wait_for_first_response(self):
         session = aiohttp.ClientSession(loop=self.loop)
@@ -210,10 +212,8 @@ class Fuzzer(object):
         self.report.start()
         self.max_datetime = None if self.max_time is None else datetime.now() + timedelta(seconds=self.max_time)
 
-        tasks = set()
-
         task = self.loop.create_task(self.watch_docker_target())
-        tasks.add(task)
+        tasks = {task}
         task.add_done_callback(tasks.remove)
 
         self.report.value("Target library", str(context.library))
@@ -225,10 +225,10 @@ class Fuzzer(object):
         self.report.value("Dump on", str(self.dump_on_status))
 
         if self.max_time:
-            self.report.value(f"Time", self.max_time)
+            self.report.value("Time", self.max_time)
 
         if self.request_count:
-            self.report.value(f"Count", self.request_count)
+            self.report.value("Count", self.request_count)
 
         request_id = 0
 
@@ -276,7 +276,7 @@ class Fuzzer(object):
         self.systematic_exporter(request)
 
         try:
-            args = {k: v for k, v in request.items()}
+            args = dict(request.items())
             args["url"] = URL(self.base_url + args.pop("path"), encoded=True)
             async with session.request(**args) as resp:
 
@@ -348,9 +348,9 @@ class Fuzzer(object):
             elif isinstance(obj, (str, bytearray)):
                 return len(obj)
             elif isinstance(obj, list):
-                return sum([get_len(item) for item in obj])
+                return sum(get_len(item) for item in obj)
             elif isinstance(obj, dict):
-                return sum([len(k) + get_len(v) for k, v in obj.items()])
+                return sum(len(k) + get_len(v) for k, v in obj.items())
             elif obj is None:
                 return 0
             else:

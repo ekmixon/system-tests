@@ -51,7 +51,7 @@ class InterfaceValidator(object):
         return f"{self.name} interface validator"
 
     def _check_closed_status(self):
-        if len([item for item in self._validations if not item.closed]) == 0:
+        if not [item for item in self._validations if not item.closed]:
             self._closed.set()
 
     # Main thread domain
@@ -79,7 +79,7 @@ class InterfaceValidator(object):
                     if not validation.is_success:
                         fails.append(validation)
 
-                if len(fails) != 0:
+                if fails:
                     self.is_success = False
                     return
 
@@ -159,9 +159,7 @@ class InterfaceValidator(object):
 
 class ObjectDumpEncoder(json.JSONEncoder):
     def default(self, o):
-        if isinstance(o, bytes):
-            return str(o)
-        return json.JSONEncoder.default(self, o)
+        return str(o) if isinstance(o, bytes) else json.JSONEncoder.default(self, o)
 
 
 class BaseValidation(object):
@@ -198,9 +196,9 @@ class BaseValidation(object):
                     func_obj = gc.get_referrers(frame_info.frame.f_code)[0]
                     self.message = func_obj.__doc__
 
-                    # if the message is missing, try to get the parent class docstring
-                    if self.message is None and hasattr(func_obj, "__class__"):
-                        self.message = func_obj.__class__.__doc__
+                # if the message is missing, try to get the parent class docstring
+                if self.message is None and hasattr(func_obj, "__class__"):
+                    self.message = func_obj.__class__.__doc__
 
                 break
 

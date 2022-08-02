@@ -57,11 +57,10 @@ class _BaseAppSecValidation(BaseValidation):
                 user_agents,
             ]
 
-        for user_agent in user_agents:
-            if get_rid_from_user_agent(user_agent) == self.rid:
-                return True
-
-        return False
+        return any(
+            get_rid_from_user_agent(user_agent) == self.rid
+            for user_agent in user_agents
+        )
 
 
 class _AppSecValidation(_BaseAppSecValidation):

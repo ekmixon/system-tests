@@ -66,18 +66,17 @@ class _TracesSamplingDecision(BaseValidation):
     def get_sampling_decision(sampling_rate, trace_id, meta):
         """Algorithm described in the priority sampling RFC
         https://github.com/DataDog/architecture/blob/master/rfcs/apm/integrations/priority-sampling/rfc.md"""
+        if meta.get("appsec.event", None) == "true":
+            return 2
+
         MAX_TRACE_ID = 2 ** 64
         KNUTH_FACTOR = 1111111111111111111
-        AUTO_REJECT = 0
-        AUTO_KEEP = 1
-        MANUAL_KEEP = 2
-
-        if meta.get("appsec.event", None) == "true":
-            return MANUAL_KEEP
-
-        if ((trace_id * KNUTH_FACTOR) % MAX_TRACE_ID) <= (sampling_rate * MAX_TRACE_ID):
-            return AUTO_KEEP
-        return AUTO_REJECT
+        return (
+            1
+            if ((trace_id * KNUTH_FACTOR) % MAX_TRACE_ID)
+            <= (sampling_rate * MAX_TRACE_ID)
+            else 0
+        )
 
 
 class _DistributedTracesDeterministicSamplingDecisisonValidation(BaseValidation):
@@ -114,9 +113,9 @@ class _DistributedTracesDeterministicSamplingDecisisonValidation(BaseValidation)
         for trace_id, decisions in self.sampling_decisions_per_trace_id.items():
             if len(decisions) < 2:
                 continue
-            if not all((d == decisions[0] for d in decisions)):
+            if any(d != decisions[0] for d in decisions):
                 errors.append(f"Sampling decisions are not deterministic for trace_id {trace_id}")
-        if len(errors) > 0:
+        if errors:
             for err in errors:
                 self.log_error(err)
             return self.set_status(False)

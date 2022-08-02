@@ -48,7 +48,7 @@ class Forwarder(object):
         self.forward_port = os.environ["FORWARD_TO_PORT"]
         self.interface_name = os.environ["INTERFACE_NAME"]
 
-        logger.info("Forward flows to {}:{}".format(self.forward_ip, self.forward_port))
+        logger.info(f"Forward flows to {self.forward_ip}:{self.forward_port}")
 
     def response(self, flow):
         logger.info(f"{flow.request.host}:{flow.request.port}{flow.request.path} {flow.response.status_code}")
@@ -69,7 +69,9 @@ class Forwarder(object):
             "host": flow.request.host,
             "port": flow.request.port,
             "request": {
-                "timestamp_start": datetime.fromtimestamp(flow.request.timestamp_start).isoformat(),
+                "timestamp_start": datetime.fromtimestamp(
+                    flow.request.timestamp_start
+                ).isoformat(),
                 "content": request_content,
                 "headers": _scrub_headers(flow.request.headers),
                 "length": len(flow.request.content) if flow.request.content else 0,
@@ -77,10 +79,13 @@ class Forwarder(object):
             "response": {
                 "status_code": flow.response.status_code,
                 "content": response_content,
-                "headers": [(k, v) for k, v in flow.response.headers.items()],
-                "length": len(flow.response.content) if flow.response.content else 0,
+                "headers": list(flow.response.headers.items()),
+                "length": len(flow.response.content)
+                if flow.response.content
+                else 0,
             },
         }
+
 
         if flow.error and flow.error.msg == FlowError.KILLED_MESSAGE:
             payload["response"] = None

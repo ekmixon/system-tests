@@ -27,11 +27,7 @@ def _get_rid_from_span(span):
 
 
 def get_rid_from_user_agent(user_agent):
-    if not user_agent or "rid/" not in user_agent:
-        return None
-
-    rid = user_agent[-36:]
-    return rid
+    return None if not user_agent or "rid/" not in user_agent else user_agent[-36:]
 
 
 def get_spans_related_to_rid(traces, rid):

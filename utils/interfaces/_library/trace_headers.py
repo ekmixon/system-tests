@@ -86,8 +86,7 @@ class _TraceHeadersPresent(BaseValidation):
 
     def check(self, data):
         request_headers = {h[0].lower() for h in data["request"]["headers"]}
-        missing_headers = self.required_headers - request_headers
-        if missing_headers:
+        if missing_headers := self.required_headers - request_headers:
             self.set_failure(f"Headers {missing_headers} are missing in request number {data['log_filename']}")
 
 

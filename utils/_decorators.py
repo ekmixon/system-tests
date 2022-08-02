@@ -37,10 +37,7 @@ def _should_skip(condition=None, library=None, weblog_variant=None):
     if weblog_variant is not None and weblog_variant != context.weblog_variant:
         return False
 
-    if library is not None and context.library != library:
-        return False
-
-    return True
+    return library is None or context.library == library
 
 
 def missing_feature(condition=None, library=None, weblog_variant=None, reason=None):
@@ -131,7 +128,10 @@ def released(cpp=None, dotnet=None, golang=None, java=None, nodejs=None, php=Non
         setattr(test_class, "__released__", version)
 
         if version == "?":
-            return _get_wrapped_class(test_class, f"missing feature: release not yet planned")
+            return _get_wrapped_class(
+                test_class, "missing feature: release not yet planned"
+            )
+
 
         if version.startswith("not relevant"):
             return _get_wrapped_class(test_class, "not relevant")

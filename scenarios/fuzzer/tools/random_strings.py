@@ -11,10 +11,7 @@ from scenarios.fuzzer.tools._tools import cached_property
 
 class _StringLists(object):
     def __init__(self):
-        self.latin1 = ""
-
-        for i in range(0x20, 0x7F):
-            self.latin1 += bytes([i]).decode("latin1")
+        self.latin1 = "".join(bytes([i]).decode("latin1") for i in range(0x20, 0x7F))
 
         for i in range(0xA0, 0xFF + 1):
             self.latin1 += bytes([i]).decode("latin1")

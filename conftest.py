@@ -35,11 +35,7 @@ def _get_skip_reason_from_marker(marker):
         if all(marker.args):
             return marker.kwargs.get("reason", "")
     elif marker.name == "skip":
-        if len(marker.args):  # if un-named arguments are present, the first one is the reason
-            return marker.args[0]
-        else:  #  otherwise, search in named arguments
-            return marker.kwargs.get("reason", "")
-
+        return marker.args[0] if len(marker.args) else marker.kwargs.get("reason", "")
     return None
 
 
@@ -67,8 +63,7 @@ def pytest_itemcollected(item):
         parent = parent.parent
 
     for marker in reversed(markers):
-        skip_reason = _get_skip_reason_from_marker(marker)
-        if skip_reason:
+        if skip_reason := _get_skip_reason_from_marker(marker):
             _skip_reasons[item.nodeid] = skip_reason
             break
 
@@ -153,29 +148,33 @@ def pytest_json_modifyreport(json_report):
 
         logger.debug("Modifying JSON report finished")
     except Exception as e:
-        logger.error(f"Fail to modify json report", exc_info=True)
+        logger.error("Fail to modify json report", exc_info=True)
 
 
 def pytest_terminal_summary(terminalreporter, exitstatus, config):
 
-    if exitstatus != pytest.ExitCode.OK:
-        validations = []
+    if exitstatus == pytest.ExitCode.OK:
+        return
+    validations = []
 
-        for interface in interfaces.all:
-            if interface.system_test_error is not None:
-                terminalreporter.write_sep("=", f"INTERNAL ERROR ON SYSTEM TESTS", red=True, bold=True)
-                terminalreporter.line("Traceback (most recent call last):", red=True)
-                for line in get_exception_traceback(interface.system_test_error):
-                    terminalreporter.line(line, red=True)
-                return
+    for interface in interfaces.all:
+        if interface.system_test_error is not None:
+            terminalreporter.write_sep(
+                "=", "INTERNAL ERROR ON SYSTEM TESTS", red=True, bold=True
+            )
 
-            validations += interface._validations
+            terminalreporter.line("Traceback (most recent call last):", red=True)
+            for line in get_exception_traceback(interface.system_test_error):
+                terminalreporter.line(line, red=True)
+            return
 
-        failed = [v for v in validations if v.closed and not v.is_success]
-        validated = [v for v in validations if v.closed and v.is_success]
+        validations += interface._validations
 
-        if len(failed) != 0:
-            _print_async_failure_report(terminalreporter, failed, validated)
+    failed = [v for v in validations if v.closed and not v.is_success]
+    validated = [v for v in validations if v.closed and v.is_success]
+
+    if failed:
+        _print_async_failure_report(terminalreporter, failed, validated)
 
 
 def pytest_sessionfinish(session, exitstatus):
@@ -214,7 +213,7 @@ def _print_async_failure_report(terminalreporter, failed, validated):
 
             for fail in fails:
                 line = lines[fail.frame.lineno - 1]
-                lines[fail.frame.lineno - 1] = "E" + line[1:]
+                lines[fail.frame.lineno - 1] = f"E{line[1:]}"
 
             lines = lines[function_line : latest_frame.lineno]
 

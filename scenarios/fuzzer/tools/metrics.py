@@ -25,7 +25,7 @@ class Metric(object):
     ):
         self.included_in_pulse = True
         self.name = name
-        self.raw_name = raw_name if raw_name else name
+        self.raw_name = raw_name or name
         self.value = value
         self.global_value = value
         self.format_string = "{value}" if format_string is None else format_string
@@ -188,10 +188,7 @@ class SelfAccumulatedMetricWithPercent(AccumulatedMetric):
 
     @property
     def raw(self):
-        if self.total == 0:
-            return None
-
-        return self.value / self.total
+        return None if self.total == 0 else self.value / self.total
 
     def reset(self):
         self.value = 0
@@ -241,14 +238,14 @@ class PerformanceMetric(Metric):
         self.global_count += 1
 
     def observe(self):
-        sum = 0
-
         i_percentiles = iter(self.percentiles.values())
         next_percentile = next(i_percentiles)
         count = self.count
         self.value = []
 
         if count > 0:
+            sum = 0
+
             for ellapsed in range(len(self.data)):
                 sum += self.data[ellapsed]
 

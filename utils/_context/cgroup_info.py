@@ -61,20 +61,18 @@ class CGroupInfo(object):
         # Break up the path to grab container_id and pod_id if available
         # e.g. /docker/<container_id>
         # e.g. /kubepods/test/pod<pod_id>/<container_id>
-        parts = [p for p in path.split("/")]
+        parts = list(path.split("/"))
 
         # Grab the container id from the path if a valid id is present
         container_id = None
         if len(parts):
-            match = cls.CONTAINER_RE.match(parts.pop())
-            if match:
+            if match := cls.CONTAINER_RE.match(parts.pop()):
                 container_id = match.group(1)
 
         # Grab the pod id from the path if a valid id is present
         pod_id = None
         if len(parts):
-            match = cls.POD_RE.match(parts.pop())
-            if match:
+            if match := cls.POD_RE.match(parts.pop()):
                 pod_id = match.group(1)
 
         return cls(id=id_, groups=groups, path=path, container_id=container_id, controllers=controllers, pod_id=pod_id)

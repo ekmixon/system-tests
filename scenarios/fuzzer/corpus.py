@@ -12,10 +12,7 @@ def get_simple_gets_corpus():
 
 
 def get_attack10_corpus():
-    result = []
-    for _ in range(9):
-        result.append({"method": "GET", "path": "/"})
-
+    result = [{"method": "GET", "path": "/"} for _ in range(9)]
     result.append({"method": "GET", "path": "/x?a='%20OR%20TRUE--"})
 
     return result

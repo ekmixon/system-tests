@@ -96,27 +96,19 @@ def _mutate_item(item):
     elif isinstance(item, bool):
         item = random.choice((True, False))
 
-    else:
-        # TODO
-        pass
-
     return item
 
 
 def _reduce_item(item):
     if len(item) == 0:
-        pass
-
-    elif isinstance(item, list):
+        return
+    if isinstance(item, list):
         _reduce_list(item)
 
     elif isinstance(item, dict):
         _reduce_dict(item)
 
-    elif isinstance(item, (str, float, int, bool)):
-        pass
-
-    else:
+    elif not isinstance(item, (str, float, int, bool)):
         raise ValueError(f"Can't enlarge {type(item)}")
 
 
@@ -165,7 +157,7 @@ def _enlarge_list(item, key, value):
 
 def _get_string_from_list(items, characters, min_length=0):
     result = random.choice(items)
-    return result if result else get_random_string(characters, min_length=min_length)
+    return result or get_random_string(characters, min_length=min_length)
 
 
 class RequestMutator:
@@ -373,13 +365,13 @@ class RequestMutator:
         path_length = random.randint(0, 32)
         items = random.choices(data.blns, k=path_length)
         items = map(quote, items)
-        request["path"] = (f"/" + "/".join(items))[: self.max_path_length]
+        request["path"] = ("/" + "/".join(items))[: self.max_path_length]
 
     def mutate_path(self, request):
         path = _mutate_string(request["path"], "/azerty?&=")
 
         if not path.startswith("/"):
-            path = "/" + path
+            path = f"/{path}"
 
         request["path"] = path[: self.max_path_length]
 
@@ -480,7 +472,7 @@ class RequestMutator:
 
     def get_header_key(self):
         result = random.choice(self.header_keys)
-        result = result if result else get_random_string(self.header_characters, min_length=1)
+        result = result or get_random_string(self.header_characters, min_length=1)
 
         if not self.allow_colon_in_first_in_header_key and result.startswith(":"):
             result = re.sub(r"^:*", "", result)
@@ -505,7 +497,7 @@ class RequestMutator:
         return _get_string_from_list(self.header_values, self.header_characters, min_length=1)
 
     def _get_random_content_type(self):
-        return "text/html;charset=" + self._get_random_charset()
+        return f"text/html;charset={self._get_random_charset()}"
 
     def _get_random_charset(self):
         # https://w3techs.com/technologies/overview/character_encoding
@@ -529,10 +521,16 @@ class RequestMutator:
         return random.choice(data.blns)
 
     def get_payload_value(self, allow_nested=False):
-        if not allow_nested:
-            return random.choice(self.payload_values)
-        else:
-            return random.choice(({self.get_payload_key(): self.get_payload_value()}, [self.get_payload_value()],))
+        return (
+            random.choice(
+                (
+                    {self.get_payload_key(): self.get_payload_value()},
+                    [self.get_payload_value()],
+                )
+            )
+            if allow_nested
+            else random.choice(self.payload_values)
+        )
 
     ################################
     def clean_request(self, request):
@@ -727,24 +725,22 @@ class PhpRequestMutator(RequestMutator):
 def get_mutator(no_mutation):
 
     if context.weblog_variant == "basic-sinatra":
-        mutator = SinatraRequestMutator(no_mutation=no_mutation)
+        return SinatraRequestMutator(no_mutation=no_mutation)
 
     elif context.weblog_variant == "rails":
-        mutator = RailsRequestMutator(no_mutation=no_mutation)
+        return RailsRequestMutator(no_mutation=no_mutation)
 
     elif context.library == "java":
-        mutator = JavaRequestMutator(no_mutation=no_mutation)
+        return JavaRequestMutator(no_mutation=no_mutation)
 
     elif context.library == "nodejs":
-        mutator = NodeRequestMutator(no_mutation=no_mutation)
+        return NodeRequestMutator(no_mutation=no_mutation)
 
     elif context.library == "php":
-        mutator = PhpRequestMutator(no_mutation=no_mutation)
+        return PhpRequestMutator(no_mutation=no_mutation)
 
     elif context.weblog_variant == "flask":
-        mutator = FlaskRequestMutator(no_mutation=no_mutation)
+        return FlaskRequestMutator(no_mutation=no_mutation)
 
     else:
-        mutator = RequestMutator(no_mutation=no_mutation)
-
-    return mutator
+        return RequestMutator(no_mutation=no_mutation)

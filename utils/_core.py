@@ -26,17 +26,15 @@ class BaseTestCase(unittest.TestCase):
         rid = "".join(random.choices(string.ascii_uppercase, k=36))
         headers = headers or {}
 
-        user_agent_key = "User-Agent"
-        for k in headers:
-            if k.lower() == "user-agent":
-                user_agent_key = k
-                break
+        user_agent_key = next(
+            (k for k in headers if k.lower() == "user-agent"), "User-Agent"
+        )
 
         user_agent = headers.get(user_agent_key, "system_tests")
         headers[user_agent_key] = f"{user_agent} rid/{rid}"
 
         url = self._get_weblog_url(path)
-        full_url = url + "?" + urllib.parse.urlencode(params) if params else url
+        full_url = f"{url}?{urllib.parse.urlencode(params)}" if params else url
 
         logger.debug(f"Send request {rid}: {method} {full_url}")
 
@@ -57,9 +55,9 @@ class BaseTestCase(unittest.TestCase):
         if path.startswith("/"):
             path = path[1:]
 
-        res = self._weblog_url_prefix + "/" + path  # urllib.parse.urljoin(self._weblog_url_prefix, path)
+        res = f"{self._weblog_url_prefix}/{path}"
 
         if query:
-            res += "?" + urllib.parse.urlencode(query)
+            res += f"?{urllib.parse.urlencode(query)}"
 
         return res

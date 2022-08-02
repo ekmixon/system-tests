@@ -20,4 +20,4 @@ def apply_method(obj, key_callback, value_callback):
     if isinstance(obj, dict):
         return {key_callback(key): apply_method(value, key_callback, value_callback) for key, value in obj.items()}
 
-    raise TypeError("Unexpcted type : " + str(type(obj)))
+    raise TypeError(f"Unexpcted type : {str(type(obj))}")

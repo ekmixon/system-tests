@@ -29,7 +29,7 @@ class _RequestExtractor(HTMLParser):
                 return
 
         if tag == "form":
-            attrs = {k: v for k, v in attrs}
+            attrs = dict(attrs)
             self.request = {
                 "method": attrs["method"],
                 "path": get_path(attrs.get("action", "/")),
@@ -37,7 +37,7 @@ class _RequestExtractor(HTMLParser):
             }
 
         elif tag == "input" and self.request:
-            attrs = {k: v for k, v in attrs}
+            attrs = dict(attrs)
 
             name = attrs.get("id", attrs.get("name", None))
             if name:

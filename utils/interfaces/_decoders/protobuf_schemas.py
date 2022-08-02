@@ -11,7 +11,7 @@ from pathlib import Path
 def _get_schema(descriptor_name, name):
     with open(Path(__file__).parent / descriptor_name, "rb") as f:
         fds = FileDescriptorSet.FromString(f.read())
-    messages = GetMessages([file for file in fds.file])
+    messages = GetMessages(list(fds.file))
     return messages[name]
 
 
